@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RPG Map Translator</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0e17;color:#dce4f0;font-family:system-ui,sans-serif;padding:14px;max-width:700px;margin:0 auto}
+h1{font-size:17px;margin-bottom:3px}
+.sub{color:#5e7490;font-size:11px;margin-bottom:18px;line-height:1.5}
+.s{background:#131b2c;border:1px solid #1a2840;border-radius:10px;padding:14px;margin-bottom:12px}
+.s h2{font-size:12.5px;color:#e09028;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.s h2 span{background:#e09028;color:#0a0e17;min-width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0}
+.t{width:100%;background:#0a0e17;border:1px solid #1a2840;border-radius:6px;padding:10px;color:#dce4f0;font-family:Consolas,monospace;font-size:11px;line-height:1.6;resize:vertical;outline:none}
+.t:focus{border-color:#e09028}
+.t[readonly]{color:#3fb950}
+.b{display:inline-flex;align-items:center;gap:5px;border:none;padding:8px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;margin-top:8px;font-family:inherit}
+.b:active{transform:scale(.97)}
+.b1{background:#e09028;color:#0a0e17}
+.b2{background:#2dd4a0;color:#0a0e17}
+.b3{background:transparent;color:#5e7490;border:1px solid #1a2840}
+.i{font-size:11px;color:#5e7490;margin-top:6px;line-height:1.5}
+.d{border:2px dashed #1a2840;border-radius:10px;padding:28px;text-align:center;cursor:pointer;margin-bottom:10px}
+.d:active{border-color:#e09028}
+.h{display:none!important}
+.pbar{height:4px;background:#1a2840;border-radius:2px;margin:8px 0;overflow:hidden}
+.pfill{height:100%;background:linear-gradient(90deg,#e09028,#2dd4a0);border-radius:2px;transition:width .3s}
+.chunk{background:#0a0e17;border:1px solid #1a2840;border-radius:6px;padding:8px;margin-bottom:6px;position:relative}
+.chunk-h{font-size:10px;color:#e09028;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center}
+.chunk textarea{width:100%;background:#0d1321;border:1px solid #1a2840;border-radius:4px;padding:8px;color:#3fb950;font-family:Consolas,monospace;font-size:10.5px;line-height:1.5;resize:none;outline:none}
+.chunk textarea:focus{border-color:#e09028}
+.cb{background:#e09028;color:#0a0e17;border:none;padding:4px 10px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit}
+.cb:active{transform:scale(.95)}
+.warn{background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.2);border-radius:8px;padding:10px;font-size:11px;color:#eab308;line-height:1.5;margin-bottom:12px}
+.warn strong{color:#facc15}
+.ok{background:rgba(45,212,160,.08);border:1px solid rgba(45,212,160,.2);border-radius:8px;padding:10px;font-size:11px;color:#2dd4a0;line-height:1.5;margin-bottom:12px}
+.ok strong{color:#4ade80}
+</style>
+</head>
+<body>
+<h1>RPG Map Translator</h1>
+<p class="sub">Ekstrak teks dari Map JSON RPG Maker MV/MZ, terjemahkan, lalu masukkan kembali.</p>
+
+<div class="warn" id="httpsW"><strong>Perhatian:</strong> Kamu membuka halaman ini tanpa HTTPS. Fitur download & copy panjang mungkin tidak berfungsi. Untuk hasil terbaik, deploy ke <strong>GitHub Pages</strong> (gratis) — semua fitur akan jalan.</div>
+<div class="ok h" id="httpsOK"><strong>HTTPS terdeteksi.</strong> Semua fitur termasuk download, share, dan copy panjang seharusnya berfungsi.</div>
+
+<div class="s" id="s1">
+<h2><span>1</span> Upload File JSON</h2>
+<div class="d" id="dz" onclick="document.getElementById('fi').click()">
+<input type="file" id="fi" accept=".json" style="display:none">
+<div style="font-size:28px;margin-bottom:6px">📁</div>
+<div style="font-size:13px;font-weight:600">Klik untuk pilih file .json</div>
+<div style="font-size:11px;color:#5e7490;margin-top:3px">Map001.json, CommonEvents.json, dll</div>
+</div>
+<div style="font-size:11px;color:#5e7490;margin-bottom:5px">Atau paste JSON:</div>
+<textarea class="t" id="inT" rows="4" placeholder="Tempel isi file .json di sini..."></textarea>
+<button class="b b1" onclick="go()">Ekstrak Teks</button>
+<div class="i" id="i1"></div>
+</div>
+
+<div class="s h" id="s2">
+<h2><span>2</span> Teks Yang Perlu Diterjemahkan</h2>
+<p class="i" style="margin:0 0 6px">Copy teks di bawah, terjemahkan, lalu paste di langkah 3. <strong>Satu teks per baris.</strong></p>
+<textarea class="t" id="oT" rows="8" readonly></textarea>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+<button class="b b1" onclick="cpTA('oT')">📋 Copy Semua Teks</button>
+<button class="b b3" onclick="showChunks('oT','c2')">📄 Copy Per Bagian</button>
+</div>
+<div id="c2" class="h" style="margin-top:10px"></div>
+<div class="i" id="i2"></div>
+</div>
+
+<div class="s h" id="s3">
+<h2><span>3</span> Paste Terjemahan</h2>
+<p class="i" style="margin:0 0 6px">Paste hasil terjemahan. <strong>Jumlah baris harus sama persis</strong> dengan langkah 2.</p>
+<textarea class="t" id="rT" rows="8" placeholder="Paste terjemahan di sini, satu teks per baris..."></textarea>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center">
+<button class="b b2" onclick="ap()">Masukkan ke JSON</button>
+<div class="pbar" style="flex:1;min-width:80px;margin:0"><div class="pfill" id="pBar" style="width:0%"></div></div>
+<span id="pTxt" style="font-size:10px;color:#5e7490">0 / 0</span>
+</div>
+<div class="i" id="i3"></div>
+</div>
+
+<div class="s h" id="s4">
+<h2><span>4</span> Hasil JSON — Simpan File Ini</h2>
+<p class="i" style="margin:0 0 8px">Coba cara-cara di bawah dari atas ke bawah. Kalau satu gagal, coba yang selanjutnya.</p>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+<button class="b b2" id="saveBtn" onclick="doSave()">💾 Simpan File (Pilihan 1)</button>
+<button class="b b1" id="shareBtn" onclick="doShare()">📤 Bagikan / Save to Files (Pilihan 2)</button>
+<button class="b b3" onclick="doDL()">⬇ Download Langsung (Pilihan 3)</button>
+</div>
+<div class="warn h" id="chunkW" style="margin-top:0"><strong>Kalau semua cara di atas gagal:</strong> gunakan "Copy Per Bagian" di bawah. Copy bagian demi bagian, lalu gabungkan di text editor.</div>
+<button class="b b3" onclick="showChunks('uT','c4')" style="margin-bottom:6px">📄 Copy Per Bagian (Pilihan 4)</button>
+<div id="c4" class="h"></div>
+<textarea class="t" id="uT" rows="8" readonly></textarea>
+<button class="b b3" onclick="cpTA('uT')" style="margin-top:4px">📋 Copy Semua JSON</button>
+<div class="i" id="i4"></div>
+</div>
+
+<script>
+var J=null,S=[],fn='',CHUNK=200;
+var isSecure=location.protocol==='https:'||location.hostname==='localhost';
+
+if(isSecure){document.getElementById('httpsW').classList.add('h');document.getElementById('httpsOK').classList.remove('h')}
+if(!navigator.canShare||!isSecure){var sb=document.getElementById('shareBtn');if(sb)sb.style.display='none'}
+if(!window.showSaveFilePicker){var sv=document.getElementById('saveBtn');if(sv)sv.style.display='none'}
+
+var dz=document.getElementById('dz'),fi=document.getElementById('fi');
+['dragenter','dragover'].forEach(function(e){dz.addEventListener(e,function(ev){ev.preventDefault()})});
+['dragleave','drop'].forEach(function(e){dz.addEventListener(e,function(ev){ev.preventDefault()})});
+dz.addEventListener('drop',function(e){if(e.dataTransfer.files[0])ld(e.dataTransfer.files[0])});
+fi.addEventListener('change',function(e){if(e.target.files[0])ld(e.target.files[0])});
+
+function ld(f){var r=new FileReader();r.onload=function(e){document.getElementById('inT').value=e.target.result;fn=f.name;dz.innerHTML='<div style="color:#3fb950;font-size:13px;font-weight:600">✅ '+f.name+'</div>'};r.readAsText(f)}
+
+document.getElementById('rT').addEventListener('input',function(){
+var lines=this.value.split('\n'),pct=S.length?Math.min(100,Math.round(lines.length/S.length*100)):0;
+document.getElementById('pBar').style.width=pct+'%';document.getElementById('pTxt').textContent=lines.length+' / '+S.length
+});
+
+function go(){
+var raw=document.getElementById('inT').value.trim();
+if(!raw)return alert('Paste atau upload file JSON dulu.');
+try{J=JSON.parse(raw)}catch(e){return alert('JSON tidak valid: '+e.message)}
+S=[];var ev=J.events||[];
+ev.forEach(function(e){if(!e||!e.pages)return;e.pages.forEach(function(p){if(!p||!p.list)return;
+for(var i=0;i<p.list.length;i++){var c=p.list[i];if(!c||!c.parameters)continue;
+if((c.code===401||c.code===405)&&typeof c.parameters[0]==='string'&&c.parameters[0].trim())S.push({r:c.parameters,k:0,l:[]});
+if(c.code===102&&Array.isArray(c.parameters[0])){c.parameters[0].forEach(function(ch,ci){if(typeof ch==='string'&&ch.trim()){
+var lk=[];for(var j=i+1;j<p.list.length;j++){if(p.list[j]&&p.list[j].code===402&&p.list[j].parameters&&p.list[j].parameters[0]===ci)lk.push(p.list[j].parameters);if(p.list[j]&&(p.list[j].code===403||p.list[j].code===404))break}
+S.push({r:c.parameters[0],k:ci,l:lk})}})}
+if(c.code===403&&typeof c.parameters[1]==='string'&&c.parameters[1].trim())S.push({r:c.parameters,k:1,l:[]})
+}})});
+if(!S.length)return alert('Tidak ditemukan teks yang bisa diterjemahkan.');
+document.getElementById('oT').value=S.map(function(s){return s.r[s.k]}).join('\n');
+document.getElementById('i2').textContent=S.length+' teks ditemukan.';
+document.getElementById('pBar').style.width='0%';document.getElementById('pTxt').textContent='0 / '+S.length;show('s2');show('s3')
+}
+
+function ap(){
+var lines=document.getElementById('rT').value.split('\n');
+if(lines.length!==S.length)return alert('Jumlah baris tidak sama!\n\nTeks asli: '+S.length+' baris\nTerjemahan: '+lines.length+' baris');
+lines.forEach(function(line,i){S[i].r[S[i].k]=line;S[i].l.forEach(function(p){p[1]=line})});
+var out=JSON.stringify(J,null,2);if(!out.endsWith('\n'))out+='\n';
+document.getElementById('uT').value=out;document.getElementById('i4').textContent=lines.length+' terjemahan diterapkan. Simpan file di bawah!';show('s4')
+}
+
+async function doSave(){
+try{var out=document.getElementById('uT').value;var h=await window.showSaveFilePicker({suggestedName:fn||'MapTranslated.json',types:[{description:'JSON',accept:{'application/json':['.json']}}]});var w=await h.createWritable();await w.write(out);await w.close();msg('i4','✅ File berhasil disimpan!','ok');return}
+catch(e){if(e.name==='AbortError'){msg('i4','Dibatalkan','');return}console.log('showSaveFilePicker gagal:',e.message)}
+msg('i4','Cara ini gagal. Coba "Bagikan / Save to Files" di bawah.','')
+}
+
+async function doShare(){
+try{var out=document.getElementById('uT').value;var file=new File([out],fn||'MapTranslated.json',{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:fn||'MapTranslated.json'});msg('i4','✅ File dibagikan!','ok');return}}
+catch(e){if(e.name==='AbortError'){msg('i4','Dibatalkan','');return}console.log('share gagal:',e.message)}
+msg('i4','Cara ini gagal. Coba "Download Langsung" di bawah.','')
+}
+
+function doDL(){
+try{var out=document.getElementById('uT').value,b=new Blob([out],{type:'application/json;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn||'MapTranslated.json';document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(a.href)},5000);msg('i4','Download dimulai! Cek folder Downloads atau notifikasi.','ok')}
+catch(e){console.log('download gagal:',e.message);document.getElementById('chunkW').classList.remove('h');msg('i4','Download gagal. Gunakan "Copy Per Bagian" di bawah ini. Salin bagian demi bagian, lalu gabungkan di text editor.','')}
+}
+
+function showChunks(taId,contId){
+var cont=document.getElementById(contId);if(!cont.classList.contains('h')){cont.classList.add('h');return}
+var text=document.getElementById(taId).value,lines=text.split('\n');if(lines.length<=CHUNK){cont.classList.add('h');return}
+var parts=[];for(var i=0;i<lines.length;i+=CHUNK)parts.push(lines.slice(i,i+CHUNK).join('\n'));
+var h='<div style="font-size:11px;color:#5e7490;margin-bottom:8px">Dipecah jadi '+parts.length+' bagian (~'+CHUNK+' baris per bagian). Copy satu per satu.</div>';
+parts.forEach(function(p,idx){h+='<div class="chunk"><div class="chunk-h"><span>Bagian '+(idx+1)+' / '+parts.length+'</span><button class="cb" onclick="cpChunk(this)">📋 Copy</button></div><textarea rows="6" readonly>'+esc(p)+'</textarea></div>'});
+cont.innerHTML=h;cont.classList.remove('h');cont.scrollIntoView({behavior:'smooth'})
+}
+
+function cpChunk(btn){var ta=btn.parentElement.nextElementSibling;ta.focus();ta.select();try{if(navigator.clipboard&&isSecure)navigator.clipboard.writeText(ta.value).then(function(){var o=btn.textContent;btn.textContent='✅ OK';setTimeout(function(){btn.textContent=o},1200)}).catch(function(){fallbackCopy(ta,btn)});else fallbackCopy(ta,btn)}catch(e){fallbackCopy(ta,btn)}}
+function fallbackCopy(ta,btn){try{var ok=document.execCommand('copy');if(ok){var o=btn.textContent;btn.textContent='✅ OK';setTimeout(function(){btn.textContent=o},1200)}else alert('Gagal copy. Coba tap teks lalu pilih Copy secara manual.')}catch(e){alert('Gagal copy. Coba tap teks lalu pilih Copy secara manual.')}}
+function cpTA(id){var ta=document.getElementById(id);ta.focus();ta.select();try{if(navigator.clipboard&&isSecure)navigator.clipboard.writeText(ta.value).then(function(){var b=ta.parentElement.querySelector('.b');if(!b)return;var o=b.innerHTML;b.innerHTML='✅ Tersalin!';setTimeout(function(){b.innerHTML=o},1500)}).catch(function(){fbCopy(ta)});else fbCopy(ta)}catch(e){fbCopy(ta)}}
+function fbCopy(ta){try{var ok=document.execCommand('copy');if(ok){var b=ta.parentElement.querySelector('.b');if(!b)return;var o=b.innerHTML;b.innerHTML='✅ Tersalin!';setTimeout(function(){b.innerHTML=o},1500)}else alert('Copy otomatis gagal.\n\nCara manual:\n1. Tap/klik textarea\n2. Pilih "Select All"\n3. Pilih "Copy"')}catch(e){alert('Gagal copy. Gunakan "Copy Per Bagian" sebagai gantinya.')}}
+function show(id){document.getElementById(id).classList.remove('h');document.getElementById(id).scrollIntoView({behavior:'smooth'})}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function msg(id,txt,type){var el=document.getElementById(id);el.textContent=txt;el.style.color=type==='ok'?'#3fb950':'#eab308'}
+</script>
+</body>
+</html>
