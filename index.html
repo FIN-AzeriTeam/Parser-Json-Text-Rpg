@@ -66,7 +66,7 @@ h1{font-size:17px;margin-bottom:3px}
 <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
 <button class="b b1" onclick="cpTA('oT')">📋 Copy Semua Teks</button>
 <button class="b b3" onclick="showChunks('oT','c2')">📄 Copy Per Bagian</button>
-<button class="b b2" onclick="dlTxt()">⬇ Download Teks (.txt)</button>
+<button class="b b2" onclick="dlTxt()">⬇ Download Teks (.json)</button>
 </div>
 <div id="c2" class="h" style="margin-top:10px"></div>
 <div class="i" id="i2"></div>
@@ -74,7 +74,12 @@ h1{font-size:17px;margin-bottom:3px}
 
 <div class="s h" id="s3">
 <h2><span>3</span> Paste Terjemahan</h2>
-<p class="i" style="margin:0 0 6px">Paste hasil terjemahan. <strong>Jumlah baris harus sama persis</strong> dengan langkah 2.</p>
+<div style="border:2px dashed #1a2840;border-radius:8px;padding:14px;text-align:center;cursor:pointer;margin-bottom:8px" onclick="document.getElementById('fi2').click()">
+<input type="file" id="fi2" accept=".json" style="display:none">
+<div style="font-size:12px;font-weight:600">📁 Upload file JSON hasil translate</div>
+<div style="font-size:10px;color:#5e7490;margin-top:2px">Atau paste manual di bawah</div>
+</div>
+<p class="i" style="margin:0 0 6px"><strong>Jumlah baris harus sama persis</strong> dengan langkah 2.</p>
 <textarea class="t" id="rT" rows="8" placeholder="Paste terjemahan di sini, satu teks per baris..."></textarea>
 <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center">
 <button class="b b2" onclick="ap()">Masukkan ke JSON</button>
@@ -113,6 +118,24 @@ var dz=document.getElementById('dz'),fi=document.getElementById('fi');
 ['dragleave','drop'].forEach(function(e){dz.addEventListener(e,function(ev){ev.preventDefault()})});
 dz.addEventListener('drop',function(e){if(e.dataTransfer.files[0])ld(e.dataTransfer.files[0])});
 fi.addEventListener('change',function(e){if(e.target.files[0])ld(e.target.files[0])});
+var fi2=document.getElementById('fi2');
+fi2.addEventListener('change',function(e){
+if(!e.target.files[0])return;
+var r2=new FileReader();
+r2.onload=function(ev){
+try{
+var data=JSON.parse(ev.target.result);
+var arr=Array.isArray(data)?data:(data.strings||data.texts||data.translations||[]);
+if(!arr.length)throw new Error('Format JSON tidak dikenali');
+document.getElementById('rT').value=arr.join('\n');
+var p=S.length?Math.min(100,Math.round(arr.length/S.length*100)):0;
+document.getElementById('pBar').style.width=p+'%';
+document.getElementById('pTxt').textContent=arr.length+' / '+S.length;
+}catch(err){alert('File JSON tidak valid: '+err.message);}
+};
+r2.readAsText(e.target.files[0]);
+fi2.value='';
+});
 
 function ld(f){var r=new FileReader();r.onload=function(e){document.getElementById('inT').value=e.target.result;fn=f.name;dz.innerHTML='<div style="color:#3fb950;font-size:13px;font-weight:600">✅ '+f.name+'</div>'};r.readAsText(f)}
 
@@ -185,11 +208,12 @@ function fbCopy(ta){try{var ok=document.execCommand('copy');if(ok){var b=ta.pare
 function show(id){document.getElementById(id).classList.remove('h');document.getElementById(id).scrollIntoView({behavior:'smooth'})}
 function dlTxt(){
 try{
-var text=document.getElementById('oT').value;
-var b=new Blob([text],{type:'text/plain;charset=utf-8'});
-var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(fn?fn.replace(/\.[^.]+$/,''):'teks')+'_asli.txt';
+var lines=document.getElementById('oT').value.split('\n');
+var obj=JSON.stringify({strings:lines},null,2);
+var b=new Blob([obj],{type:'application/json;charset=utf-8'});
+var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(fn?fn.replace(/\.[^.]+$/,''):'teks')+'_asli.json';
 document.body.appendChild(a);a.click();document.body.removeChild(a);
-}catch(e){alert('Download gagal. Gunakan Copy sebagai gantinya.');}
+}catch(e){alert('Download gagal. Gunakan Copy sebagai gantikan.');}
   }
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function msg(id,txt,type){var el=document.getElementById(id);el.textContent=txt;el.style.color=type==='ok'?'#3fb950':'#eab308'}
