@@ -209,7 +209,7 @@ function show(id){document.getElementById(id).classList.remove('h');document.get
 function dlTxt(){
 try{
 var lines=document.getElementById('oT').value.split('\n');
-var obj=JSON.stringify({strings:lines},null,2);
+var obj=JSON.stringify(lines,null,2);
 var b=new Blob([obj],{type:'application/json;charset=utf-8'});
 var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(fn?fn.replace(/\.[^.]+$/,''):'teks')+'_asli.json';
 document.body.appendChild(a);a.click();document.body.removeChild(a);
