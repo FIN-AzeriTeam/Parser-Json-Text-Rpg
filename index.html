@@ -125,8 +125,12 @@ function go(){
 var raw=document.getElementById('inT').value.trim();
 if(!raw)return alert('Paste atau upload file JSON dulu.');
 try{J=JSON.parse(raw)}catch(e){return alert('JSON tidak valid: '+e.message)}
-S=[];var ev=J.events||[];
-ev.forEach(function(e){if(!e||!e.pages)return;e.pages.forEach(function(p){if(!p||!p.list)return;
+S=[];var isCE=Array.isArray(J);
+var ev=isCE?J:(J.events||[]);
+ev.forEach(function(e){
+if(!e)return;
+var pages=isCE?(e.list?[{list:e.list}]:[]):(e.pages||[]);
+pages.forEach(function(p){if(!p||!p.list)return;
 for(var i=0;i<p.list.length;i++){var c=p.list[i];if(!c||!c.parameters)continue;
 if((c.code===401||c.code===405)&&typeof c.parameters[0]==='string'&&c.parameters[0].trim())S.push({r:c.parameters,k:0,l:[]});
 if(c.code===102&&Array.isArray(c.parameters[0])){c.parameters[0].forEach(function(ch,ci){if(typeof ch==='string'&&ch.trim()){
