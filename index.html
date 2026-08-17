@@ -39,7 +39,7 @@ h1{font-size:17px;margin-bottom:3px}
 </style>
 </head>
 <body>
-<h1>RPG Map Translator</h1>
+<h1>PARSER TEXT JSON</h1>
 <p class="sub">Ekstrak teks dari Map JSON RPG Maker MV/MZ, terjemahkan, lalu masukkan kembali.</p>
 
 <div class="warn" id="httpsW"><strong>Perhatian:</strong> Kamu membuka halaman ini tanpa HTTPS. Fitur download & copy panjang mungkin tidak berfungsi. Untuk hasil terbaik, deploy ke <strong>GitHub Pages</strong> (gratis) — semua fitur akan jalan.</div>
@@ -66,6 +66,7 @@ h1{font-size:17px;margin-bottom:3px}
 <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
 <button class="b b1" onclick="cpTA('oT')">📋 Copy Semua Teks</button>
 <button class="b b3" onclick="showChunks('oT','c2')">📄 Copy Per Bagian</button>
+<button class="b b2" onclick="dlTxt()">⬇ Download Teks (.txt)</button>
 </div>
 <div id="c2" class="h" style="margin-top:10px"></div>
 <div class="i" id="i2"></div>
@@ -178,6 +179,14 @@ function fallbackCopy(ta,btn){try{var ok=document.execCommand('copy');if(ok){var
 function cpTA(id){var ta=document.getElementById(id);ta.focus();ta.select();try{if(navigator.clipboard&&isSecure)navigator.clipboard.writeText(ta.value).then(function(){var b=ta.parentElement.querySelector('.b');if(!b)return;var o=b.innerHTML;b.innerHTML='✅ Tersalin!';setTimeout(function(){b.innerHTML=o},1500)}).catch(function(){fbCopy(ta)});else fbCopy(ta)}catch(e){fbCopy(ta)}}
 function fbCopy(ta){try{var ok=document.execCommand('copy');if(ok){var b=ta.parentElement.querySelector('.b');if(!b)return;var o=b.innerHTML;b.innerHTML='✅ Tersalin!';setTimeout(function(){b.innerHTML=o},1500)}else alert('Copy otomatis gagal.\n\nCara manual:\n1. Tap/klik textarea\n2. Pilih "Select All"\n3. Pilih "Copy"')}catch(e){alert('Gagal copy. Gunakan "Copy Per Bagian" sebagai gantinya.')}}
 function show(id){document.getElementById(id).classList.remove('h');document.getElementById(id).scrollIntoView({behavior:'smooth'})}
+function dlTxt(){
+try{
+var text=document.getElementById('oT').value;
+var b=new Blob([text],{type:'text/plain;charset=utf-8'});
+var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(fn?fn.replace(/\.[^.]+$/,''):'teks')+'_asli.txt';
+document.body.appendChild(a);a.click();document.body.removeChild(a);
+}catch(e){alert('Download gagal. Gunakan Copy sebagai gantinya.');}
+  }
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function msg(id,txt,type){var el=document.getElementById(id);el.textContent=txt;el.style.color=type==='ok'?'#3fb950':'#eab308'}
 </script>
