@@ -144,6 +144,11 @@ var lines=this.value.split('\n'),pct=S.length?Math.min(100,Math.round(lines.leng
 document.getElementById('pBar').style.width=pct+'%';document.getElementById('pTxt').textContent=lines.length+' / '+S.length
 });
 
+function isRealText(s){
+var c=s.replace(/\\PICN\[[^\]]*\]/gi,'').replace(/\\[^\s]/g,'').replace(/[\[\]0-9,\-]/g,'').trim();
+var n=c.replace(/[^a-zA-Z\u00C0-\u024F\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uAC00-\uD7AF\u0621-\u064A]/g,'').length;
+return n>=2;
+}
 function go(){
 var raw=document.getElementById('inT').value.trim();
 if(!raw)return alert('Paste atau upload file JSON dulu.');
@@ -155,11 +160,11 @@ if(!e)return;
 var pages=isCE?(e.list?[{list:e.list}]:[]):(e.pages||[]);
 pages.forEach(function(p){if(!p||!p.list)return;
 for(var i=0;i<p.list.length;i++){var c=p.list[i];if(!c||!c.parameters)continue;
-if((c.code===401||c.code===405)&&typeof c.parameters[0]==='string'&&c.parameters[0].trim())S.push({r:c.parameters,k:0,l:[]});
-if(c.code===102&&Array.isArray(c.parameters[0])){c.parameters[0].forEach(function(ch,ci){if(typeof ch==='string'&&ch.trim()){
+if((c.code===401||c.code===405)&&typeof c.parameters[0]==='string'&&c.parameters[0].trim()&&isRealText(c.parameters[0]))S.push({r:c.parameters,k:0,l:[]});
+if(c.code===102&&Array.isArray(c.parameters[0])){c.parameters[0].forEach(function(ch,ci){if(typeof ch==='string'&&ch.trim()&&isRealText(ch)){
 var lk=[];for(var j=i+1;j<p.list.length;j++){if(p.list[j]&&p.list[j].code===402&&p.list[j].parameters&&p.list[j].parameters[0]===ci)lk.push(p.list[j].parameters);if(p.list[j]&&(p.list[j].code===403||p.list[j].code===404))break}
 S.push({r:c.parameters[0],k:ci,l:lk})}})}
-if(c.code===403&&typeof c.parameters[1]==='string'&&c.parameters[1].trim())S.push({r:c.parameters,k:1,l:[]})
+if(c.code===403&&typeof c.parameters[1]==='string'&&c.parameters[1].trim()&&isRealText(c.parameters[1]))S.push({r:c.parameters,k:1,l:[]})
 }})});
 if(!S.length)return alert('Tidak ditemukan teks yang bisa diterjemahkan.');
 document.getElementById('oT').value=S.map(function(s){return s.r[s.k]}).join('\n');
