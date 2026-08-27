@@ -169,7 +169,7 @@ if(c.code===403&&typeof c.parameters[1]==='string'&&c.parameters[1].trim()&&isRe
 if(!S.length)return alert('Tidak ditemukan teks yang bisa diterjemahkan.');
 document.getElementById('oT').value=S.map(function(s){return s.r[s.k]}).join('\n');
 document.getElementById('i2').textContent=S.length+' teks ditemukan.';
-document.getElementById('pBar').style.width='0%';document.getElementById('pTxt').textContent='0 / '+S.length;show('s2');show('s3')
+document.getElementById('pBar').style.width='0%';document.getElementById('pTxt').textContent='0 / '+S.length;document.getElementById('s1').classList.add('h');show('s2');show('s3')
 }
 
 function ap(){
@@ -177,7 +177,7 @@ var lines=document.getElementById('rT').value.split('\n');
 if(lines.length!==S.length)return alert('Jumlah baris tidak sama!\n\nTeks asli: '+S.length+' baris\nTerjemahan: '+lines.length+' baris');
 lines.forEach(function(line,i){S[i].r[S[i].k]=line;S[i].l.forEach(function(p){p[1]=line})});
 var out=JSON.stringify(J,null,2);if(!out.endsWith('\n'))out+='\n';
-document.getElementById('uT').value=out;document.getElementById('i4').textContent=lines.length+' terjemahan diterapkan. Simpan file di bawah!';show('s4')
+document.getElementById('uT').value=out;document.getElementById('i4').textContent=lines.length+' terjemahan diterapkan. Simpan file di bawah!';document.getElementById('s2').classList.add('h');document.getElementById('s3').classList.add('h');show('s4')
 }
 
 async function doSave(){
