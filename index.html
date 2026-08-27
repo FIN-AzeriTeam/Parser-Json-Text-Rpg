@@ -148,7 +148,7 @@ var c=s.replace(/\\PICN\[[^\]]*\]/gi,'').replace(/\\[^\s]/g,'').replace(/[\[\]0-
 var n=c.replace(/[^a-zA-Z\u00C0-\u024F\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uAC00-\uD7AF\u0621-\u064A]/g,'').length;
 return n>=2;
 }
-function buildArr(){return S.map(function(s,i){var n=names[i];return n?{name:n.ref[n.key],message:s.r[s.k]}:s.r[s.k]})}
+function buildArr(){return S.map(function(s,i){var n=names[i];return n?{name:n.ref[n.key],message:s.r[s.k]}:{message:s.r[s.k]}})}
 function go(){
 var raw=document.getElementById('inT').value.trim();
 if(!raw)return alert('Paste atau upload file JSON dulu.');
