@@ -79,7 +79,7 @@ h1{font-size:17px;margin-bottom:3px}
 <div style="font-size:12px;font-weight:600">📁 Upload file JSON hasil translate</div>
 <div style="font-size:10px;color:#5e7490;margin-top:2px">Atau paste manual di bawah</div>
 </div>
-<p class="i" style="margin:0 0 6px"><strong>Jumlah baris harus sama persis</strong> dengan langkah 2.</p>
+<p class="i" style="margin:0 0 6px"><strong>Jumlah entry harus sama persis</strong> dengan langkah 2.</p>
 <textarea class="t" id="rT" rows="8" placeholder="Paste terjemahan di sini, satu teks per baris..."></textarea>
 <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center">
 <button class="b b2" onclick="ap()">Masukkan ke JSON</button>
@@ -106,7 +106,7 @@ h1{font-size:17px;margin-bottom:3px}
 </div>
 
 <script>
-var J=null,S=[],fn='',CHUNK=200;
+var J=null,S=[],names=[],fn='',CHUNK=200;
 var isSecure=location.protocol==='https:'||location.hostname==='localhost';
 
 if(isSecure){document.getElementById('httpsW').classList.add('h');document.getElementById('httpsOK').classList.remove('h')}
@@ -124,24 +124,23 @@ if(!e.target.files[0])return;
 var r2=new FileReader();
 r2.onload=function(ev){
 try{
-var data=JSON.parse(ev.target.result);
-var arr=Array.isArray(data)?data.map(function(d){return typeof d==='object'&&d.message?d.message:String(d)}):(data.strings||data.texts||data.translations||[]);
+var data=JSON.parse(ev.target.result);var arr=Array.isArray(data)?data:[];
 if(!arr.length)throw new Error('Format JSON tidak dikenali');
-document.getElementById('rT').value=arr.join('\n');
+document.getElementById('rT').value=JSON.stringify(arr,null,2);
 var p=S.length?Math.min(100,Math.round(arr.length/S.length*100)):0;
-document.getElementById('pBar').style.width=p+'%';
-document.getElementById('pTxt').textContent=arr.length+' / '+S.length;
+document.getElementById('pBar').style.width=p+'%';document.getElementById('pTxt').textContent=arr.length+' / '+S.length;
 }catch(err){alert('File JSON tidak valid: '+err.message);}
 };
-r2.readAsText(e.target.files[0]);
-fi2.value='';
+r2.readAsText(e.target.files[0]);fi2.value='';
 });
 
 function ld(f){var r=new FileReader();r.onload=function(e){document.getElementById('inT').value=e.target.result;fn=f.name;dz.innerHTML='<div style="color:#3fb950;font-size:13px;font-weight:600">✅ '+f.name+'</div>'};r.readAsText(f)}
 
 document.getElementById('rT').addEventListener('input',function(){
-var lines=this.value.split('\n'),pct=S.length?Math.min(100,Math.round(lines.length/S.length*100)):0;
-document.getElementById('pBar').style.width=pct+'%';document.getElementById('pTxt').textContent=lines.length+' / '+S.length
+try{var data=JSON.parse(this.value);var arr=Array.isArray(data)?data:[];
+var p=S.length?Math.min(100,Math.round(arr.length/S.length*100)):0;
+document.getElementById('pBar').style.width=p+'%';document.getElementById('pTxt').textContent=arr.length+' / '+S.length;
+}catch(e){}
 });
 
 function isRealText(s){
@@ -149,35 +148,45 @@ var c=s.replace(/\\PICN\[[^\]]*\]/gi,'').replace(/\\[^\s]/g,'').replace(/[\[\]0-
 var n=c.replace(/[^a-zA-Z\u00C0-\u024F\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uAC00-\uD7AF\u0621-\u064A]/g,'').length;
 return n>=2;
 }
+function buildArr(){return S.map(function(s,i){var n=names[i];return n?{name:n.ref[n.key],message:s.r[s.k]}:s.r[s.k]})}
 function go(){
 var raw=document.getElementById('inT').value.trim();
 if(!raw)return alert('Paste atau upload file JSON dulu.');
 try{J=JSON.parse(raw)}catch(e){return alert('JSON tidak valid: '+e.message)}
-S=[];var isCE=Array.isArray(J);
-var ev=isCE?J:(J.events||[]);
+S=[];names=[];var isCE=Array.isArray(J);
+var ev=isCE?J:(J.events||[]);var curName=null;
 ev.forEach(function(e){
-if(!e)return;
-var pages=isCE?(e.list?[{list:e.list}]:[]):(e.pages||[]);
-pages.forEach(function(p){if(!p||!p.list)return;
+if(!e)return;var pages=isCE?(e.list?[{list:e.list}]:[]):(e.pages||[]);
+pages.forEach(function(p){if(!p||!p.list)return;curName=null;
 for(var i=0;i<p.list.length;i++){var c=p.list[i];if(!c||!c.parameters)continue;
-if((c.code===401||c.code===405)&&typeof c.parameters[0]==='string'&&c.parameters[0].trim()&&isRealText(c.parameters[0]))S.push({r:c.parameters,k:0,l:[]});
-if(c.code===102&&Array.isArray(c.parameters[0])){c.parameters[0].forEach(function(ch,ci){if(typeof ch==='string'&&ch.trim()&&isRealText(ch)){
-var lk=[];for(var j=i+1;j<p.list.length;j++){if(p.list[j]&&p.list[j].code===402&&p.list[j].parameters&&p.list[j].parameters[0]===ci)lk.push(p.list[j].parameters);if(p.list[j]&&(p.list[j].code===403||p.list[j].code===404))break}
-S.push({r:c.parameters[0],k:ci,l:lk})}})}
-if(c.code===403&&typeof c.parameters[1]==='string'&&c.parameters[1].trim()&&isRealText(c.parameters[1]))S.push({r:c.parameters,k:1,l:[]})
+if(c.code===101){var hn=c.parameters[4]&&typeof c.parameters[4]==='string'&&c.parameters[4].trim();curName=hn?{ref:c.parameters,key:4}:null}
+if((c.code===401||c.code===405)&&typeof c.parameters[0]==='string'&&c.parameters[0].trim()&&isRealText(c.parameters[0])){S.push({r:c.parameters,k:0,l:[]});names.push(curName)}
+if(c.code===102&&Array.isArray(c.parameters[0])){curName=null;c.parameters[0].forEach(function(ch,ci){if(typeof ch==='string'&&ch.trim()&&isRealText(ch)){var lk=[];for(var j=i+1;j<p.list.length;j++){if(p.list[j]&&p.list[j].code===402&&p.list[j].parameters&&p.list[j].parameters[0]===ci)lk.push(p.list[j].parameters);if(p.list[j]&&(p.list[j].code===403||p.list[j].code===404))break}S.push({r:c.parameters[0],k:ci,l:lk});names.push(null)}})}
+if(c.code===403&&typeof c.parameters[1]==='string'&&c.parameters[1].trim()&&isRealText(c.parameters[1])){curName=null;S.push({r:c.parameters,k:1,l:[]});names.push(null)}
 }})});
 if(!S.length)return alert('Tidak ditemukan teks yang bisa diterjemahkan.');
-document.getElementById('oT').value=S.map(function(s){return s.r[s.k]}).join('\n');
+var arr=S.map(function(s,i){var n=names[i];return{name:n?n.ref[n.key]:"",message:s.r[s.k]}});
+document.getElementById('oT').value=JSON.stringify(buildArr(),null,2);
 document.getElementById('i2').textContent=S.length+' teks ditemukan.';
-document.getElementById('pBar').style.width='0%';document.getElementById('pTxt').textContent='0 / '+S.length;document.getElementById('s1').classList.add('h');show('s2');show('s3')
+document.getElementById('pBar').style.width='0%';document.getElementById('pTxt').textContent='0 / '+S.length;
+document.getElementById('s1').classList.add('h');show('s2');show('s3')
 }
 
 function ap(){
-var lines=document.getElementById('rT').value.split('\n');
-if(lines.length!==S.length)return alert('Jumlah baris tidak sama!\n\nTeks asli: '+S.length+' baris\nTerjemahan: '+lines.length+' baris');
-lines.forEach(function(line,i){S[i].r[S[i].k]=line;S[i].l.forEach(function(p){p[1]=line})});
+var data;try{data=JSON.parse(document.getElementById('rT').value)}catch(e){return alert('JSON tidak valid: '+e.message)}
+if(!Array.isArray(data))return alert('Format harus berupa array JSON.');
+if(data.length!==S.length)return alert('Jumlah entry tidak sama!\n\nAsli: '+S.length+'\nTerjemahan: '+data.length);
+data.forEach(function(item,i){
+var msg,name=null;
+if(typeof item==='string')msg=item;
+else if(typeof item==='object'&&item!==null){name=item.name||null;msg=item.message||''}
+else msg=String(item);
+if(name!==null&&names[i])names[i].ref[names[i].key]=name;
+S[i].r[S[i].k]=msg;S[i].l.forEach(function(p){p[1]=msg});
+});
 var out=JSON.stringify(J,null,2);if(!out.endsWith('\n'))out+='\n';
-document.getElementById('uT').value=out;document.getElementById('i4').textContent=lines.length+' terjemahan diterapkan. Simpan file di bawah!';document.getElementById('s2').classList.add('h');document.getElementById('s3').classList.add('h');show('s4')
+document.getElementById('uT').value=out;document.getElementById('i4').textContent=data.length+' terjemahan diterapkan. Simpan file di bawah!';
+document.getElementById('s2').classList.add('h');document.getElementById('s3').classList.add('h');show('s4')
 }
 
 async function doSave(){
@@ -213,14 +222,13 @@ function fbCopy(ta){try{var ok=document.execCommand('copy');if(ok){var b=ta.pare
 function show(id){document.getElementById(id).classList.remove('h');document.getElementById(id).scrollIntoView({behavior:'smooth'})}
 function dlTxt(){
 try{
-var lines=document.getElementById('oT').value.split('\n');
-var arr=lines.map(function(l){return{"message":l}});
-var obj=JSON.stringify(arr,null,2);
+var arr=S.map(function(s,i){var n=names[i];return{name:n?n.ref[n.key]:"",message:s.r[s.k]}});
+var obj=JSON.stringify(buildArr(),null,2);
 var b=new Blob([obj],{type:'application/json;charset=utf-8'});
 var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(fn?fn.replace(/\.[^.]+$/,''):'teks')+'_asli.json';
 document.body.appendChild(a);a.click();document.body.removeChild(a);
 }catch(e){alert('Download gagal. Gunakan Copy sebagai gantikan.');}
-  }
+}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function msg(id,txt,type){var el=document.getElementById(id);el.textContent=txt;el.style.color=type==='ok'?'#3fb950':'#eab308'}
 </script>
